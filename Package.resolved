@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "swiftevolution",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/davidscheutz/SwiftEvolution.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "09e52970d838f7c2809df7ff79ce24de0718a514"
+      }
+    }
+  ],
+  "version" : 2
+}

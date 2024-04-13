@@ -1,3 +1,5 @@
+import SwiftEvolution
+
 public protocol ViewProvider {
     associatedtype State
     associatedtype Event

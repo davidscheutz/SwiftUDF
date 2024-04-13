@@ -28,13 +28,7 @@ fileprivate struct BindableContainerView<Provider: ViewProvider, ChildView: Bind
     
     var body: some View {
         viewBuilder(state, provider.handle(_:))
-            .onReceive(provider.state.receive(on: RunLoop.main).eraseToAnyPublisher()) { newState in
-                if Thread.isMainThread {
-                    update(newState)
-                } else {
-                    DispatchQueue.main.async { self.update(newState) }
-                }
-            }
+            .onReceive(provider.state.receiveOnMain().eraseToAnyPublisher()) { update($0) }
     }
     
     private func update(_ newState: ChildView.State) {
