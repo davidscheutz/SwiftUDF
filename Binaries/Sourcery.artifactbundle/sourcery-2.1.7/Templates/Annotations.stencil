@@ -1,0 +1,197 @@
+// Template name: Annotations
+// Template version: 1.0
+
+{% macro includeImports type %}
+    {% for import in type.imports %}
+import {{ import }}
+    {% endfor %}
+{% endmacro %}
+
+/*
+    Example:
+        /// @State(JournalView)
+*/
+{% for type in types.structs %}
+  {% for comment in type.documentation %}
+    {% if comment|contains:"@State(" %}
+        {% call includeImports type %}
+        {% set state %}{{ comment | replace:"@State(","" | replace:")","" }}{% endset %}
+extension {{ state }} {
+    typealias State = {{ type.name }}
+}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+/*
+    Example:
+        /// @Event(JournalView)
+*/
+{% for type in types.enums %}
+  {% for comment in type.documentation %}
+    {% if comment|contains:"@Event(" %}
+        {% call includeImports type %}
+        {% set event %}{{ comment | replace:"@Event(","" | replace:")","" }}{% endset %}
+extension {{ event }} {
+    typealias Event = {{ type.name }}
+}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+// TODO: find a better way to handle default external names
+{% macro associatedValueName value index -%}
+    {%- if value.localName == nil -%}{%- if value.externalName == nil or value.externalName == "0" or value.externalName == "1" or value.externalName == "2" -%}{{ value.typeName|lowerFirstLetter|replace:".","" }}{{ index }}{%- else -%}{{ value.externalName }}{%- endif -%}{%- else -%}{{ value.localName }}{%- endif -%}
+{%- endmacro %}
+
+/*
+    Example
+    /// @Loop(StateModel, EventEnum)
+*/
+
+{% macro propertyUpdates state %}
+    {% for type in types.structs where type.name == state %}
+        {% for property in type.variables|instance where property.readAccess != "private" and property.readAccess != "fileprivate" %}
+        
+    var {{ property.name }}: {{ property.typeName }} {
+        currentState.{{ property.name }}
+    }
+    
+            {% if property.defaultValue == nil and property|!computed %}
+    func update{{ property.name|upperFirstLetter }}(_ {{ property.name }}: {{ property.typeName }}) {
+                {% if property.isOptional %}
+        update { $0.copy({{ property.name }}: .use({{ property.name }})) }
+                {% else %}
+        update { $0.copy({{ property.name }}: {{ property.name }}) }
+                {% endif %}
+    }
+    
+    func update{{ property.name|upperFirstLetter }}(_ update: ({{ property.typeName }}) -> {{ property.typeName }}) {
+        let {{ property.name }} = update(mutableState.value.{{ property.name }})
+        update{{ property.name|upperFirstLetter }}({{ property.name }})
+    }
+            {% endif %}
+        {% endfor %}
+        {% break %}
+    {% endfor %}
+{% endmacro %}
+
+{% for type in types.all %}
+  {% for comment in type.documentation %}
+    {% if comment|contains:"@Loop" %}
+import SwiftUDF
+import SwiftEvolution
+import Combine
+        {% call includeImports type %}
+        
+class GeneratedBase{{ type.name }}: ViewProvider {
+    let state: CurrentValuePublisher<State>
+    private let mutableState: MutableState<State>
+    
+    // TODO: Default init for State thtat implements 'Initialable'
+    init(initial: State) {
+        mutableState = MutableState(initial)
+        state = .init(mutableState)
+    }
+    
+    var subscriptions = [AnyCancellable]()
+    
+        {% set typePair %}{{ comment|replace:"@Loop(",""|replace:")","" }}{% endset %}
+        
+        {% for innerType in typePair|split: "," %}
+            {% if forloop.counter == 1 %}
+                {% set state %}{{ innerType }}{% endset %}
+    var currentState: State { state.value }
+    
+    {% call propertyUpdates state %}
+    
+    func update(_ newState: State) {
+        mutableState.send(newState)
+    }
+    
+    func update(_ update: (State) -> State) {
+        mutableState.send(update(mutableState.value))
+    }
+    
+    func update(_ update: (MutableState<State>) -> Void) {
+        update(mutableState)
+    }
+    
+    typealias State = {{ state }}
+            {% endif %}
+            
+            {% if forloop.counter == 2 %}
+                {% set event %}{{ innerType|replace:" ","" }}{% endset %}
+    typealias Event = {{ event }}
+                {% for eventEnum in types.enums where eventEnum.name == event %}
+                
+    /*
+        Events entry point
+    */
+    func handle(_ event: Event) {
+        {{ "switch event {" if eventEnum.cases.count > 0 }}
+                    {% for case in eventEnum.cases %}
+                        {% if case.hasAssociatedValue %}
+            case .{{ case.name }}(
+                            {% for associatedValue in case.associatedValues %}
+                                {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
+                let {{ name }}{{ ", " if not forloop.last }}
+                            {% endfor %}
+                ): {{ case.name }}(
+                            {% for associatedValue in case.associatedValues %}
+                                {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
+                    {{ name }}: {{ name }}{{ ", " if not forloop.last }}
+                            {% endfor %}
+                )
+                        {% else %}
+            case .{{ case.name }}: {{ case.name }}()
+                        {% endif %}
+                    {% endfor %}
+        {{ "}" if eventEnum.cases.count > 0 }}
+    }
+    
+    /*
+        Override functions
+    */
+    
+    func start() {}
+    func stop() {}
+    
+                    {% for case in eventEnum.cases %}
+                        {% if case.hasAssociatedValue %}
+    func {{ case.name }}(
+                            {% for associatedValue in case.associatedValues %}
+                                {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
+        {{ name }}: {{ associatedValue.typeName }}{{ ", " if not forloop.last }}
+                            {% endfor %}
+    ) {
+                        {% else %}
+    func {{ case.name }}() {
+                        {% endif %}
+        fatalError("{{ case.name }} not implemented - needs to be overriden!")
+    }
+                    {% endfor %}
+                    
+                    {% break %}
+                {% endfor %}
+            {% endif %}
+    {% endfor %}
+}
+
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+/*
+    Bundle extensions
+*/
+
+import Foundation
+
+private final class {{ argument.target }}Class {}
+
+extension Bundle {
+    static var {{ argument.target|lowerFirstLetter }}: Bundle {
+        Bundle(for: {{ argument.target }}Class.self)
+    }
+}

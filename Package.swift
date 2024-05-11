@@ -7,10 +7,8 @@ let package = Package(
     name: "SwiftUDF",
     platforms: [.iOS(.v14), .macOS(.v10_15)],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "SwiftUDF",
-            targets: ["SwiftUDF"]),
+        .library(name: "SwiftUDF", targets: ["SwiftUDF"]),
+        .plugin(name: "SwiftUDFCodeGeneratorPlugin", targets: ["SwiftUDFCodeGeneratorPlugin"])
     ],
     dependencies: [
         .package(url: "https://github.com/davidscheutz/SwiftEvolution.git", branch: "main")
@@ -21,6 +19,17 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftEvolution", package: "SwiftEvolution")
             ]
+        ),
+        .plugin(
+            name: "SwiftUDFCodeGeneratorPlugin",
+            capability: .buildTool(),
+            dependencies: [
+                .target(name: "SwiftUDFSourcery")
+            ]
+        ),
+        .binaryTarget(
+            name: "SwiftUDFSourcery",
+            path: "Binaries/sourcery.artifactbundle"
         ),
     ]
 )
