@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-extension View where Self: BindableView {
+extension BindableView {
     public static func create<Provider: ViewProvider>(using provider: Provider) -> some View
         where Provider.State == State, Provider.Event == Event
     {
