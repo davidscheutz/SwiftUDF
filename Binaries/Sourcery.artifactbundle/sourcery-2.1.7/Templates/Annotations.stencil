@@ -60,9 +60,9 @@ extension {{ event }} {
             {% if property.defaultValue == nil and property|!computed %}
     func update{{ property.name|upperFirstLetter }}(_ {{ property.name }}: {{ property.typeName }}) {
                 {% if property.isOptional %}
-        update { $0.copy({{ property.name }}: .use({{ property.name }})) }
+        update({{ property.name }}: .use({{ property.name }}))
                 {% else %}
-        update { $0.copy({{ property.name }}: {{ property.name }}) }
+        update({{ property.name }}: {{ property.name }})
                 {% endif %}
     }
     
@@ -72,9 +72,54 @@ extension {{ event }} {
     }
             {% endif %}
         {% endfor %}
+        
+    func update(
+        {% for property in type.variables|instance|!computed where property.readAccess != "private" and property.readAccess != "fileprivate" and property.defaultValue == nil %}
+        
+        {% if property.isOptional %}
+        {{ property.name }}: OptionalUpdate<{{ property.typeName.unwrappedTypeName }}> = .noChange{% ifnot forloop.last %}, {% endif %}
+        {% else %}
+        {{ property.name }}: {{ property.typeName }}? = nil{% ifnot forloop.last %}, {% endif %}
+        {% endif %}
+        {% endfor %}
+    ) {
+        let updated = {{ type.name }}(
+            {% for property in type.variables|instance|!computed where property.readAccess != "private" and property.readAccess != "fileprivate" and property.defaultValue == nil %}
+            {% if property.isOptional %}
+            {{ property.name }}: {{ property.name }}.resolve(using: self.{{ property.name }}){% ifnot forloop.last %}, {% endif %}
+            {% else %}
+            {{ property.name }}: {{ property.name }} ?? self.{{ property.name }}{% ifnot forloop.last %}, {% endif %}
+            {% endif %}
+            {% endfor %}
+        )
+        update(updated)
+    }
+        
         {% break %}
     {% endfor %}
 {% endmacro %}
+
+enum OptionalUpdate<T> {
+    case update(T)
+    case reset
+    case noChange
+    
+    static func use(_ value: T?) -> OptionalUpdate<T> {
+        return if let value {
+            .update(value)
+        } else {
+            .reset
+        }
+    }
+    
+    internal func resolve(using current: T?) -> T? {
+        switch self {
+            case .update(let new): return new
+            case .reset: return nil
+            case .noChange: return current
+        }
+    }
+}
 
 {% for type in types.all %}
   {% for comment in type.documentation %}
