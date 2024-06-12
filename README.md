@@ -13,12 +13,14 @@ Widely known design pattern like MVVM aren't cutting it anymore.
 
 SwiftUDF provides a set of useful functionality to setup your SwiftUI views using the unidirectional data flow pattern.
 
-## View
+## Components
+
+### View
 
 A view only needs data to render, referred to as `State` and a way to pass through the user input, referred to as `Event`.
 
 ```swift
-protocol BindableView {
+protocol BindableView: View {
     associatedtype State
     associatedtype Event
     
@@ -40,7 +42,7 @@ enum CounterEvent {
     case decrease
 }
 
-struct CounterView: View, BindableView {
+struct CounterView: BindableView {
     let state: CounterState
     let handler: (CounterEvent) -> Void
 
@@ -55,7 +57,7 @@ CounterView.preview(.init(count: 0))
 CounterView.preview(.init(count: 3))
 ```
 
-## Loop
+### Loop
 
 Every `BindableView` needs a counter part, providing the state and receiving the user input, referred to as `Loop` in our case.
 
@@ -98,7 +100,7 @@ Using the `@Loop` annotation, `SwiftUDF` will automatically generate a "BaseLoop
 - update functions for each field of the `State`
 - functions for every case of the `Event` enum
 
-## Binding the `View` with the `Loop`
+### Binding the `View` with the `Loop`
 
 Instantiating and binding a view with the provider is straight forward:
 
@@ -107,6 +109,10 @@ CounterView.create(using: CounterLoop())
 ```
 
 `SwiftUDF` will wrap your view into a container, subscribe to the loop's state and ensuring all state updates are dispatched on the main thread.
+
+## Demo Project
+
+To see `SwiftUDF` fully in action, checkout the demo project. Compatible with iOS and macOS, including tests.
 
 ## Contributing
 
