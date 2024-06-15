@@ -3,21 +3,21 @@
 ![SwiftPM Compatible](https://img.shields.io/badge/SwiftPM-Compatible-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-# Unidirectional Data Flow code generation for SwiftUI
+# Practical Unidirectional Data Flow Architecture for SwiftUI
 
-"The UI is a function of the state" - Apple
+**"The UI is a function of the state" - Apple**
 
 Declarative UI frameworks like SwiftUI require us to rethink how we architect our apps.
 
-Widely known design pattern like MVVM aren't cutting it anymore.
+Widely known design patterns like MVVM aren't cutting it anymore and most UDF libraries require us to write a lot of boilerplate code.
 
-SwiftUDF provides a set of useful functionality to setup your SwiftUI views using the unidirectional data flow pattern.
+SwiftUDF provides a streamlined development experience for how to setup SwiftUI views using the unidirectional data flow pattern, support by code generation.
 
 ## Components
 
 ### View
 
-A view only needs data to render, referred to as `State` and a way to pass through the user input, referred to as `Event`.
+The responsibility of a view is to render data, referred to as `State`, and pass through the inputs received from the user, referred to as `Event`.
 
 ```swift
 protocol BindableView: View {
@@ -30,18 +30,24 @@ protocol BindableView: View {
 
 **Example**
 
-Imagine a simple counter app, displayingathe total count and two buttons to increment or decrement the count.
+Imagine a simple counter app, displaying a total count and two buttons to increment or decrement that count.
+
+The `State` and `Event` could look like this:
 
 ```swift
 struct CounterState {
-    let count: Int
+    let count: Int    // immutable fields for thread safety!
 }
 
 enum CounterEvent {
     case increase
     case decrease
 }
+```
 
+The view would conform to `BindableView` like this:
+
+```swift
 struct CounterView: BindableView {
     let state: CounterState
     let handler: (CounterEvent) -> Void
@@ -50,16 +56,17 @@ struct CounterView: BindableView {
 }
 ```
 
-Harness the power of previews by building your UI with different states:
+This simple setup enables us to harness the power of previews by building our UI with all the different states that might occur:
 
 ```swift
 CounterView.preview(.init(count: 0))
 CounterView.preview(.init(count: 3))
+...
 ```
 
 ### Loop
 
-Every `BindableView` needs a counter part, providing the state and receiving the user input, referred to as `Loop` in our case.
+The counter part to `BindableView`, providing the state and receiving the user input, referred to as `Loop`.
 
 ```swift
 protocol ViewProvider {
@@ -75,11 +82,11 @@ protocol ViewProvider {
 }
 ```
 
-`CurrentValuePublisher` is a special `Combine.Publisher` providing an additional read-only value, representing the current state of the `Loop`.
+`CurrentValuePublisher` is a custom `Combine.Publisher` providing an additional read-only value, representing the current state of the `Loop`.
 
 **Example**
 
-Continuing with our counter app example, let's create our `Loop` implementation.
+Continuing with our counter app example, a basic `Loop` implementation could look as followed:
 
 ```swift
 /// @Loop(CounterState, CounterEvent)
@@ -95,10 +102,10 @@ final class CounterLoop: GeneratedBaseCounterLoop {
 }
 ```
 
-Using the `@Loop` annotation, `SwiftUDF` will automatically generate a "BaseLoop", providing the following functionalities:
+Using the `@Loop(State, Event)` annotation, `SwiftUDF` will generate a "BaseLoop" `class` including the following functionalities:
 - first level read-only variables for each field of the `State` each field of the `State`
 - update functions for each field of the `State`
-- functions for every case of the `Event` enum
+- a dedicated function for every user input aka every case of the `Event` enum
 
 ### Binding the `View` with the `Loop`
 
@@ -108,11 +115,11 @@ Instantiating and binding a view with the provider is straight forward:
 CounterView.create(using: CounterLoop())
 ```
 
-`SwiftUDF` will wrap your view into a container, subscribe to the loop's state and ensuring all state updates are dispatched on the main thread.
+`SwiftUDF` will wrap your view into a container, subscribing to the loop's state, calling `start` and `stop` of the loop and ensuring all state updates are dispatched on the main thread.
 
 ## Demo Project
 
-To see `SwiftUDF` fully in action, checkout the demo project. Compatible with iOS and macOS, including tests.
+To see `SwiftUDF` in action, please checkout the demo project. It contains a slightly evolved example of the counter app, compatible with iOS and macOS, including tests.
 
 ## Contributing
 
