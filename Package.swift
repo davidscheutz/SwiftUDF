@@ -11,7 +11,7 @@ let package = Package(
         .plugin(name: "SwiftUDFCodeGeneratorPlugin", targets: ["SwiftUDFCodeGeneratorPlugin"])
     ],
     dependencies: [
-        .package(url: "https://github.com/davidscheutz/SwiftEvolution.git", branch: "main")
+        .package(url: "https://github.com/davidscheutz/SwiftEvolution.git", from: "0.0.1")
     ],
     targets: [
         .target(
