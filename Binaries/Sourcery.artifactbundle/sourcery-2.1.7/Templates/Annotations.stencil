@@ -1,5 +1,5 @@
 // Template name: Annotations
-// Template version: 1.0
+// Template version: 1.1
 
 {% macro includeImports type %}
     {% for import in type.imports %}
@@ -8,46 +8,50 @@ import {{ import }}
 {% endmacro %}
 
 /*
-    Example:
-        /// @State(JournalView)
+    Examples:
+        @State(ViewType.self)
+        @State(ViewType1.self, ViewType2.self)
 */
 {% for type in types.structs %}
-  {% for comment in type.documentation %}
-    {% if comment|contains:"@State(" %}
-        {% call includeImports type %}
-        {% set state %}{{ comment | replace:"@State(","" | replace:")","" }}{% endset %}
-extension {{ state }} {
+    {% for attribute, objects in type.attributes %}
+        {% if attribute == "State" %}
+            {% set viewTypes %}{{ objects[0].description|replace:"@Event(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
+            {% for view in viewTypes|split: "," %}
+extension {{ view }} {
     typealias State = {{ type.name }}
 }
-    {% endif %}
-  {% endfor %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+/*
+    Examples:
+        @Event(ViewType.self)
+        @Event(ViewType1.self, ViewType2.self)
+*/
+{% for type in types.enums %}
+    {% for attribute, objects in type.attributes %}
+        {% if attribute == "Event" %}
+            {% set viewTypes %}{{ objects[0].description|replace:"@Event(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
+            {% for view in viewTypes|split: "," %}
+extension {{ view }} {
+    typealias Event = {{ type.name }}
+}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
 {% endfor %}
 
 /*
     Example:
-        /// @Event(JournalView)
+        @Loop(in: EventType.self, out: StateType.self)
 */
-{% for type in types.enums %}
-  {% for comment in type.documentation %}
-    {% if comment|contains:"@Event(" %}
-        {% call includeImports type %}
-        {% set event %}{{ comment | replace:"@Event(","" | replace:")","" }}{% endset %}
-extension {{ event }} {
-    typealias Event = {{ type.name }}
-}
-    {% endif %}
-  {% endfor %}
-{% endfor %}
 
 // TODO: find a better way to handle default external names
 {% macro associatedValueName value index -%}
     {%- if value.localName == nil -%}{%- if value.externalName == nil or value.externalName == "0" or value.externalName == "1" or value.externalName == "2" -%}{{ value.typeName|lowerFirstLetter|replace:".","" }}{{ index }}{%- else -%}{{ value.externalName }}{%- endif -%}{%- else -%}{{ value.localName }}{%- endif -%}
 {%- endmacro %}
-
-/*
-    Example
-    /// @Loop(StateModel, EventEnum)
-*/
 
 {% macro propertyUpdates state %}
     {% for type in types.structs where type.name == state %}
@@ -123,15 +127,23 @@ enum OptionalUpdate<T> {
 
 {% for type in types.all %}
   {% for comment in type.documentation %}
-    {% if comment|contains:"@Loop" %}
+    {% if attribute == "Loop" %}
+        {% set parameters %}{{ objects[0].description|replace:"@Loop(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
+        // TODO: get the state and event type
+        {% set event %}{{ parameters|replace:" ",""|split: ","[0] }}{% endset %}
+        {% set state %}{{ parameters|replace:" ",""|split: ","[1] }}{% endset %}
+        
 import SwiftUDF
 import SwiftEvolution
 import Combine
         {% call includeImports type %}
         
-class GeneratedBase{{ type.name }}: ViewProvider {
+class {{ type.name }}BaseGenerated: ViewProvider {
     let state: CurrentValuePublisher<State>
     private let mutableState: MutableState<State>
+    
+    typealias Event = {{ event }}
+    typealias State = {{ state }}
     
     // TODO: Default init for State thtat implements 'Initialable'
     init(initial: State) {
@@ -141,11 +153,8 @@ class GeneratedBase{{ type.name }}: ViewProvider {
     
     var subscriptions = [AnyCancellable]()
     
-        {% set typePair %}{{ comment|replace:"@Loop(",""|replace:")","" }}{% endset %}
-        
-        {% for innerType in typePair|split: "," %}
-            {% if forloop.counter == 1 %}
-                {% set state %}{{ innerType }}{% endset %}
+    // MARK: State
+    
     var currentState: State { state.value }
     
     {% call propertyUpdates state %}
@@ -162,69 +171,59 @@ class GeneratedBase{{ type.name }}: ViewProvider {
         update(mutableState)
     }
     
-    typealias State = {{ state }}
-            {% endif %}
-            
-            {% if forloop.counter == 2 %}
-                {% set event %}{{ innerType|replace:" ","" }}{% endset %}
-    typealias Event = {{ event }}
-                {% for eventEnum in types.enums where eventEnum.name == event %}
-                
-    /*
-        Events entry point
-    */
+    // MARK: Event
+    
+    {% for eventEnum in types.enums where eventEnum.name == event %}
+        {% if forloop.counter == 1 %}
     func handle(_ event: Event) {
         {{ "switch event {" if eventEnum.cases.count > 0 }}
-                    {% for case in eventEnum.cases %}
-                        {% if case.hasAssociatedValue %}
+            {% for case in eventEnum.cases %}
+                {% if case.hasAssociatedValue %}
             case .{{ case.name }}(
-                            {% for associatedValue in case.associatedValues %}
-                                {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
+                    {% for associatedValue in case.associatedValues %}
+                        {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
                 let {{ name }}{{ ", " if not forloop.last }}
-                            {% endfor %}
-                ): {{ case.name }}(
-                            {% for associatedValue in case.associatedValues %}
-                                {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
-                    {{ name }}: {{ name }}{{ ", " if not forloop.last }}
-                            {% endfor %}
-                )
-                        {% else %}
-            case .{{ case.name }}: {{ case.name }}()
-                        {% endif %}
                     {% endfor %}
+                ): {{ case.name }}(
+                    {% for associatedValue in case.associatedValues %}
+                        {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
+                    {{ name }}: {{ name }}{{ ", " if not forloop.last }}
+                    {% endfor %}
+                )
+                {% else %}
+            case .{{ case.name }}: {{ case.name }}()
+                {% endif %}
+            {% endfor %}
         {{ "}" if eventEnum.cases.count > 0 }}
     }
     
-    /*
-        Override functions
-    */
+            {% for case in eventEnum.cases %}
+                {% if case.hasAssociatedValue %}
+    func {{ case.name }}(
+                    {% for associatedValue in case.associatedValues %}
+                        {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
+        {{ name }}: {{ associatedValue.typeName }}{{ ", " if not forloop.last }}
+                    {% endfor %}
+    ) {
+                {% else %}
+    func {{ case.name }}() {
+                {% endif %}
+        fatalError("{{ case.name }} not implemented - needs to be overriden!")
+    }
+            {% endfor %}
+        {% else %}
+        // ⚠️ Found more than one type matching '{{ event}}}'
+        {% endif %}
+    {% endfor %}
+        
+    // MARK: Lifecycle
     
     func start() {}
     func stop() {}
-    
-                    {% for case in eventEnum.cases %}
-                        {% if case.hasAssociatedValue %}
-    func {{ case.name }}(
-                            {% for associatedValue in case.associatedValues %}
-                                {% set name %}{% call associatedValueName associatedValue forloop.counter %}{% endset %}
-        {{ name }}: {{ associatedValue.typeName }}{{ ", " if not forloop.last }}
-                            {% endfor %}
-    ) {
-                        {% else %}
-    func {{ case.name }}() {
-                        {% endif %}
-        fatalError("{{ case.name }} not implemented - needs to be overriden!")
-    }
-                    {% endfor %}
-                    
-                    {% break %}
-                {% endfor %}
-            {% endif %}
-    {% endfor %}
 }
 
-    {% endif %}
-  {% endfor %}
+        {% endif %}
+    {% endfor %}
 {% endfor %}
 
 /*
