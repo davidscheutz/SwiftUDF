@@ -89,8 +89,8 @@ protocol ViewProvider {
 Continuing with our counter app example, a basic `Loop` implementation could look as followed:
 
 ```swift
-/// @Loop(CounterState, CounterEvent)
-final class CounterLoop: GeneratedBaseCounterLoop {
+@Loop(in: CounterEvent.self, out: CounterState.self)
+final class CounterLoop: CounterLoopBaseGenerated {
     override func increase() {
         updateCount(count + 1)
     }
@@ -102,7 +102,7 @@ final class CounterLoop: GeneratedBaseCounterLoop {
 }
 ```
 
-Using the `@Loop(State, Event)` annotation, `SwiftUDF` will generate a "BaseLoop" `class` including the following functionalities:
+Using the `@Loop(Event, State)` annotation, `SwiftUDF` will generate a "BaseLoop" `class` including the following functionalities:
 - first level read-only variables for each field of the `State` each field of the `State`
 - update functions for each field of the `State`
 - a dedicated function for every user input aka every case of the `Event` enum
