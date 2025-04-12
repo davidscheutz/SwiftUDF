@@ -34,7 +34,7 @@ final class CounterLoop: CounterLoopBaseGenerated {
     
     private func resetErrorDelayed() {
         Task {
-            try await Task.sleep(nanoseconds: 2 * 1_000_000_000) // 2 seconds
+            try await Task.sleep(for: .seconds(2))
             updateError(nil)
         }
     }
