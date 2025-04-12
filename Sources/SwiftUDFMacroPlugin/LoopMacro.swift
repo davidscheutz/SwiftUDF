@@ -3,8 +3,6 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 import Foundation
 
-// this should generate an extension confirming to the base type
-// extension LoginLoop: ListLoopBaseGenerated {}
 public struct LoopMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
