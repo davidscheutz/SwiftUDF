@@ -15,8 +15,8 @@ extension BindableView {
 fileprivate struct BindableContainerView<Provider: ViewProvider, ChildView: BindableView & View>: View
     where ChildView.State == Provider.State, ChildView.Event == Provider.Event {
     
-    @State private var state: ChildView.State
-    @State private var provider: Provider
+    @SwiftUI.State private var state: ChildView.State
+    @SwiftUI.State private var provider: Provider
     
     private let viewBuilder: (ChildView.State, @escaping (ChildView.Event) -> Void) -> ChildView
     

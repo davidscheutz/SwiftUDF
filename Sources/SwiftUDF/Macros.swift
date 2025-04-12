@@ -10,7 +10,7 @@
 public macro Loop(
     in event: Any.Type,
     out state: Any.Type
-) = #externalMacro(module: "SwiftUDFMacro", type: "LoopMacro")
+) = #externalMacro(module: "SwiftUDFMacroPlugin", type: "LoopMacro")
 
 /// Declares an annotation that can be used to specify a state.
 ///
@@ -18,11 +18,9 @@ public macro Loop(
 ///
 ///
 /// - Parameters:
-///   - views: Specifies the types that the state will be linked to.
+///   - view: Specifies the type that the state will be linked to.
 @attached(peer, names: named(Singleton))
-public macro State(
-    _ views: Any.Type...,
-) = #externalMacro(module: "SwiftUDFMacro", type: "StateMacro")
+public macro State(_ view: Any.Type) = #externalMacro(module: "SwiftUDFMacroPlugin", type: "StateMacro")
 
 /// Declares an annotation that can be used to specify an event.
 ///
@@ -30,8 +28,6 @@ public macro State(
 ///
 ///
 /// - Parameters:
-///   - views: Specifies the types that the event will be linked to.
+///   - view: Specifies the type that the event will be linked to.
 @attached(peer, names: named(Singleton))
-public macro State(
-    _ views: Any.Type...,
-) = #externalMacro(module: "SwiftUDFMacro", type: "EventMacro")
+public macro Event(_ view: Any.Type) = #externalMacro(module: "SwiftUDFMacroPlugin", type: "EventMacro")

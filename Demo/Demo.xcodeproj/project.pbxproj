@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B93F2C952DAA36BF002EBDC9 /* SwiftUDF in Frameworks */ = {isa = PBXBuildFile; productRef = B93F2C942DAA36BF002EBDC9 /* SwiftUDF */; };
 		B9917FA92C1642E100F10DB0 /* DemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9917FA82C1642E100F10DB0 /* DemoApp.swift */; };
 		B9917FAD2C1642E400F10DB0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9917FAC2C1642E400F10DB0 /* Assets.xcassets */; };
 		B9917FB12C1642E400F10DB0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B9917FB02C1642E400F10DB0 /* Preview Assets.xcassets */; };
@@ -45,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B93F2C952DAA36BF002EBDC9 /* SwiftUDF in Frameworks */,
 				B9917FD52C16438B00F10DB0 /* SwiftUDF in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -129,11 +131,12 @@
 			buildRules = (
 			);
 			dependencies = (
-				B9BDAC6E2C194E0C00EC659E /* PBXTargetDependency */,
+				B93F2C972DAA36C8002EBDC9 /* PBXTargetDependency */,
 			);
 			name = Demo;
 			packageProductDependencies = (
 				B9917FD42C16438B00F10DB0 /* SwiftUDF */,
+				B93F2C942DAA36BF002EBDC9 /* SwiftUDF */,
 			);
 			productName = Demo;
 			productReference = B9917FA52C1642E100F10DB0 /* Demo.app */;
@@ -186,7 +189,7 @@
 			);
 			mainGroup = B9917F9C2C1642E100F10DB0;
 			packageReferences = (
-				B9BDAC6A2C194DFD00EC659E /* XCRemoteSwiftPackageReference "SwiftUDF" */,
+				B93F2C932DAA36BF002EBDC9 /* XCLocalSwiftPackageReference "../../swift-unidirectional-data-flow" */,
 			);
 			productRefGroup = B9917FA62C1642E100F10DB0 /* Products */;
 			projectDirPath = "";
@@ -240,14 +243,14 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		B93F2C972DAA36C8002EBDC9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = B93F2C962DAA36C8002EBDC9 /* SwiftUDFCodeGeneratorPlugin */;
+		};
 		B9917FB82C1642E400F10DB0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B9917FA42C1642E100F10DB0 /* Demo */;
 			targetProxy = B9917FB72C1642E400F10DB0 /* PBXContainerItemProxy */;
-		};
-		B9BDAC6E2C194E0C00EC659E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = B9BDAC6D2C194E0C00EC659E /* SwiftUDFCodeGeneratorPlugin */;
 		};
 /* End PBXTargetDependency section */
 
@@ -520,26 +523,26 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		B9BDAC6A2C194DFD00EC659E /* XCRemoteSwiftPackageReference "SwiftUDF" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/davidscheutz/SwiftUDF.git";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		B93F2C932DAA36BF002EBDC9 /* XCLocalSwiftPackageReference "../../swift-unidirectional-data-flow" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../swift-unidirectional-data-flow";
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		B9917FD42C16438B00F10DB0 /* SwiftUDF */ = {
+		B93F2C942DAA36BF002EBDC9 /* SwiftUDF */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftUDF;
 		};
-		B9BDAC6D2C194E0C00EC659E /* SwiftUDFCodeGeneratorPlugin */ = {
+		B93F2C962DAA36C8002EBDC9 /* SwiftUDFCodeGeneratorPlugin */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B9BDAC6A2C194DFD00EC659E /* XCRemoteSwiftPackageReference "SwiftUDF" */;
+			package = B93F2C932DAA36BF002EBDC9 /* XCLocalSwiftPackageReference "../../swift-unidirectional-data-flow" */;
 			productName = "plugin:SwiftUDFCodeGeneratorPlugin";
+		};
+		B9917FD42C16438B00F10DB0 /* SwiftUDF */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftUDF;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

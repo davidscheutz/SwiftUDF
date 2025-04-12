@@ -15,12 +15,10 @@ import {{ import }}
 {% for type in types.structs %}
     {% for attribute, objects in type.attributes %}
         {% if attribute == "State" %}
-            {% set viewTypes %}{{ objects[0].description|replace:"@Event(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
-            {% for view in viewTypes|split: "," %}
+            {% set view %}{{ objects[0].description|replace:"@State(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
 extension {{ view }} {
     typealias State = {{ type.name }}
 }
-            {% endfor %}
         {% endif %}
     {% endfor %}
 {% endfor %}
@@ -33,12 +31,10 @@ extension {{ view }} {
 {% for type in types.enums %}
     {% for attribute, objects in type.attributes %}
         {% if attribute == "Event" %}
-            {% set viewTypes %}{{ objects[0].description|replace:"@Event(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
-            {% for view in viewTypes|split: "," %}
+            {% set view %}{{ objects[0].description|replace:"@Event(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
 extension {{ view }} {
     typealias Event = {{ type.name }}
 }
-            {% endfor %}
         {% endif %}
     {% endfor %}
 {% endfor %}
@@ -126,25 +122,29 @@ enum OptionalUpdate<T> {
 }
 
 {% for type in types.all %}
-  {% for comment in type.documentation %}
+  {% for attribute, objects in type.attributes %}
     {% if attribute == "Loop" %}
-        {% set parameters %}{{ objects[0].description|replace:"@Loop(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
-        // TODO: get the state and event type
-        {% set event %}{{ parameters|replace:" ",""|split: ","[0] }}{% endset %}
-        {% set state %}{{ parameters|replace:" ",""|split: ","[1] }}{% endset %}
+        {% set parametersString %}{{ objects[0].description|replace:"@Loop(",""|replace:")",""|replace:".self",""|replace:" ","" }}{% endset %}
+        {% set parameters %}{{ parametersString|replace:" ","" }}{% endset %}
         
 import SwiftUDF
 import SwiftEvolution
 import Combine
         {% call includeImports type %}
-        
+
 class {{ type.name }}BaseGenerated: ViewProvider {
     let state: CurrentValuePublisher<State>
     private let mutableState: MutableState<State>
-    
-    typealias Event = {{ event }}
-    typealias State = {{ state }}
-    
+
+    {% for parameter in parameters|split: "," %}
+        {% if forloop.counter0 == 0 %}
+    typealias Event = {{ parameter|replace:"in:","" }}
+        {% endif %}
+        {% if forloop.counter0 == 1 %}
+    typealias State = {{ parameter|replace:"out:","" }}
+        {% endif %}
+    {% endfor %}
+
     // TODO: Default init for State thtat implements 'Initialable'
     init(initial: State) {
         mutableState = MutableState(initial)
@@ -152,12 +152,16 @@ class {{ type.name }}BaseGenerated: ViewProvider {
     }
     
     var subscriptions = [AnyCancellable]()
-    
+
     // MARK: State
-    
+
     var currentState: State { state.value }
-    
-    {% call propertyUpdates state %}
+
+    {% for parameter in parameters|split: "," %}
+        {% if forloop.counter0 == 1 %}
+    {% call propertyUpdates parameter|replace:"out:","" %}
+        {% endif %}
+    {% endfor %}
     
     func update(_ newState: State) {
         mutableState.send(newState)
@@ -170,10 +174,10 @@ class {{ type.name }}BaseGenerated: ViewProvider {
     func update(_ update: (MutableState<State>) -> Void) {
         update(mutableState)
     }
-    
+
     // MARK: Event
-    
-    {% for eventEnum in types.enums where eventEnum.name == event %}
+
+    {% for eventEnum in types.enums where parameters|contains:eventEnum.name %} // TODO: an exact event name match would be better...
         {% if forloop.counter == 1 %}
     func handle(_ event: Event) {
         {{ "switch event {" if eventEnum.cases.count > 0 }}
@@ -215,9 +219,9 @@ class {{ type.name }}BaseGenerated: ViewProvider {
         // ⚠️ Found more than one type matching '{{ event}}}'
         {% endif %}
     {% endfor %}
-        
+
     // MARK: Lifecycle
-    
+
     func start() {}
     func stop() {}
 }

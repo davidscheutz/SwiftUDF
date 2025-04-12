@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUDF
 
 enum Increment: Int, CaseIterable, Identifiable {
     case byOne = 1
@@ -9,6 +10,7 @@ enum Increment: Int, CaseIterable, Identifiable {
     var display: String { "\(rawValue)" }
 }
 
+@State(CounterView.self)
 struct CounterState {
     let increment: Increment
     let count: Int
@@ -19,6 +21,7 @@ struct CounterState {
     }
 }
 
+@Event(CounterView.self)
 enum CounterEvent {
     case incrementSelected(_ increment: Increment)
     case increase

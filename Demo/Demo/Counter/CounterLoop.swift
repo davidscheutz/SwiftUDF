@@ -1,7 +1,8 @@
 import Foundation
+import SwiftUDF
 
-/// @Loop(CounterState, CounterEvent)
-final class CounterLoop: GeneratedBaseCounterLoop {
+@Loop(in: CounterEvent.self, out: CounterState.self)
+final class CounterLoop: CounterLoopBaseGenerated {
     init() {
         super.init(initial: .init(increment: .byOne, count: 0, error: nil))
     }

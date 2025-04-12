@@ -19,7 +19,8 @@ let package = Package(
         .target(
             name: "SwiftUDF",
             dependencies: [
-                .product(name: "SwiftEvolution", package: "SwiftEvolution")
+                .product(name: "SwiftEvolution", package: "SwiftEvolution"),
+                .byNameItem(name: "SwiftUDFMacroPlugin", condition: nil)
             ]
         ),
         .macro(
