@@ -2,6 +2,7 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
     name: "SwiftUDF",
@@ -11,13 +12,22 @@ let package = Package(
         .plugin(name: "SwiftUDFCodeGeneratorPlugin", targets: ["SwiftUDFCodeGeneratorPlugin"])
     ],
     dependencies: [
-        .package(url: "https://github.com/davidscheutz/SwiftEvolution.git", from: "0.0.1")
+        .package(url: "https://github.com/davidscheutz/SwiftEvolution.git", from: "0.0.1"),
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
     ],
     targets: [
         .target(
             name: "SwiftUDF",
             dependencies: [
-                .product(name: "SwiftEvolution", package: "SwiftEvolution")
+                .product(name: "SwiftEvolution", package: "SwiftEvolution"),
+                .byNameItem(name: "SwiftUDFMacroPlugin", condition: nil)
+            ]
+        ),
+        .macro(
+            name: "SwiftUDFMacroPlugin",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
             ]
         ),
         .plugin(

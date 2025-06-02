@@ -1,7 +1,8 @@
 import Foundation
+import SwiftUDF
 
-/// @Loop(CounterState, CounterEvent)
-final class CounterLoop: GeneratedBaseCounterLoop {
+@Loop(in: CounterEvent.self, out: CounterState.self)
+final class CounterLoop: CounterLoopBaseGenerated {
     init() {
         super.init(initial: .init(increment: .byOne, count: 0, error: nil))
     }
@@ -33,7 +34,7 @@ final class CounterLoop: GeneratedBaseCounterLoop {
     
     private func resetErrorDelayed() {
         Task {
-            try await Task.sleep(nanoseconds: 2 * 1_000_000_000) // 2 seconds
+            try await Task.sleep(for: .seconds(2))
             updateError(nil)
         }
     }

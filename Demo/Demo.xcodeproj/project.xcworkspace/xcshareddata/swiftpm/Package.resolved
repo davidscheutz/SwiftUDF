@@ -1,22 +1,22 @@
 {
-  "originHash" : "787189544fbcb5e6c1cc135d509def186f493048c8e1d70576f703f1ce144908",
+  "originHash" : "532d6a40db1cc6d6e8cb99955c9a86f34b595cf3c615152af6a07168aea4f747",
   "pins" : [
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-syntax.git",
+      "state" : {
+        "revision" : "64889f0c732f210a935a0ad7cda38f77f876262d",
+        "version" : "509.1.1"
+      }
+    },
     {
       "identity" : "swiftevolution",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/davidscheutz/SwiftEvolution.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "0fc4402897ac4b06fc410754ce7f7f245f19cce2"
-      }
-    },
-    {
-      "identity" : "swiftudf",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/davidscheutz/SwiftUDF.git",
-      "state" : {
-        "branch" : "master",
-        "revision" : "02ed242b8632f5010b446d1e14863552b176fc96"
+        "revision" : "0fc4402897ac4b06fc410754ce7f7f245f19cce2",
+        "version" : "0.0.1"
       }
     }
   ],
