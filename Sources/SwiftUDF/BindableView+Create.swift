@@ -15,15 +15,26 @@ extension BindableView {
 fileprivate struct BindableContainerView<Provider: ViewProvider, ChildView: BindableView & View>: View
     where ChildView.State == Provider.State, ChildView.Event == Provider.Event {
     
-    @SwiftUI.State private var state: ChildView.State
-    @SwiftUI.State private var provider: Provider
+    // Plain `SwiftUI.State` storage instead of `@SwiftUI.State`: since the iOS/macOS 27 SDKs `State` is
+    // also a macro, and its expansion breaks because this module declares its own `State` macro.
+    private var stateStorage: SwiftUI.State<ChildView.State>
+    private var providerStorage: SwiftUI.State<Provider>
     
     private let viewBuilder: (ChildView.State, @escaping (ChildView.Event) -> Void) -> ChildView
     
     init(provider: Provider, view: ChildView.Type) {
-        _state = .init(initialValue: provider.state.value)
-        _provider = .init(initialValue: provider)
+        stateStorage = .init(initialValue: provider.state.value)
+        providerStorage = .init(initialValue: provider)
         viewBuilder = view.init
+    }
+    
+    private var state: ChildView.State {
+        get { stateStorage.wrappedValue }
+        nonmutating set { stateStorage.wrappedValue = newValue }
+    }
+    
+    private var provider: Provider {
+        providerStorage.wrappedValue
     }
     
     var body: some View {
